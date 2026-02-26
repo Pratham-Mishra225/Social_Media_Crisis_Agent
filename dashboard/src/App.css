@@ -1,0 +1,844 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg: #07090f;
+  --surface: #0d1220;
+  --surface2: #131a2e;
+  --border: #222f48;
+  --border2: #364d6e;
+  --text: #b8cce0;
+  --text-2: #6a7e9a;
+  --text-hi: #f0f4fc;
+  --blue: #5ba3f5;
+  --amber: #f5a623;
+  --green: #3ecf8e;
+  --red: #f56565;
+  --purple: #b794f4;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1.65;
+  overflow: hidden;
+}
+
+/* ── App shell ──────────────────────────────────────────── */
+.app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Topbar ─────────────────────────────────────────────── */
+.topbar {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  gap: 24px;
+  flex-shrink: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.brand-bolt {
+  font-size: 22px;
+}
+
+.brand-name {
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-hi);
+  letter-spacing: 0.01em;
+}
+
+.brand-sub {
+  font-size: 11px;
+  color: var(--text-2);
+  margin-top: 1px;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* ── Pipeline ───────────────────────────────────────────── */
+.pipeline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 6px;
+}
+
+/* Row of nodes + connector lines */
+.pipeline-nodes-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.pipeline-node-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.pipeline-line {
+  width: 32px;
+  height: 2px;
+  background: var(--border2);
+  border-radius: 1px;
+  transition: background 0.4s;
+  flex-shrink: 0;
+}
+
+.pipeline-line.done {
+  background: var(--green);
+}
+
+.pipeline-node {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  border: 2px solid var(--border2);
+  background: var(--surface2);
+  position: relative;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.pipeline-node.done {
+  border-color: var(--green);
+  background: rgba(62, 207, 142, 0.12);
+}
+
+.pipeline-node.active {
+  border-color: var(--amber);
+  background: rgba(245, 166, 35, 0.12);
+}
+
+.pipeline-node.pending {
+  opacity: 0.4;
+}
+
+.pipeline-pulse {
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 2px solid var(--amber);
+  animation: pulse-ring 1.4s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+
+  100% {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+
+/* Row of labels below nodes */
+.pipeline-labels-row {
+  display: flex;
+  align-items: center;
+}
+
+.pipeline-label-wrap {
+  width: 36px;
+  /* same width as node */
+  display: flex;
+  justify-content: center;
+}
+
+/* space label-wraps to match node-wrap gaps (line widths) */
+.pipeline-label-wrap+.pipeline-label-wrap {
+  margin-left: 32px;
+  /* matches pipeline-line width */
+}
+
+.pipeline-label {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--text-2);
+  text-transform: uppercase;
+  text-align: center;
+  white-space: nowrap;
+  font-weight: 500;
+  transition: color 0.3s;
+}
+
+.pipeline-label.done {
+  color: var(--green);
+}
+
+.pipeline-label.active {
+  color: var(--amber);
+  font-weight: 700;
+}
+
+/* ── Buttons ────────────────────────────────────────────── */
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--text);
+  padding: 8px 16px;
+  border-radius: 7px;
+  font-family: var(--mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.btn-ghost:hover {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.btn-run {
+  background: var(--amber);
+  color: #000;
+  border: none;
+  padding: 9px 20px;
+  border-radius: 7px;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.btn-run:hover:not(:disabled) {
+  background: #fcd34d;
+  box-shadow: 0 0 24px rgba(245, 166, 35, 0.35);
+}
+
+.btn-run:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-run-active {
+  background: transparent !important;
+  color: var(--amber) !important;
+  border: 1px solid var(--amber) !important;
+}
+
+.spin {
+  display: inline-block;
+  animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Status Badge ───────────────────────────────────────── */
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.status-idle {
+  border-color: var(--border2);
+  color: var(--text-2);
+}
+
+.status-running {
+  border-color: var(--amber);
+  color: var(--amber);
+  background: rgba(245, 166, 35, 0.07);
+}
+
+.status-completed {
+  border-color: var(--green);
+  color: var(--green);
+  background: rgba(62, 207, 142, 0.07);
+}
+
+.status-error {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-running .status-dot {
+  animation: blink 0.7s step-end infinite;
+}
+
+@keyframes blink {
+
+  0%,
+  100% {
+    opacity: 1
+  }
+
+  50% {
+    opacity: 0
+  }
+}
+
+/* ── Alert Bar ──────────────────────────────────────────── */
+.alert-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 24px;
+  border-bottom: 2px solid;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  animation: slide-down 0.3s ease-out;
+  flex-shrink: 0;
+}
+
+.alert-icon {
+  font-size: 18px;
+}
+
+@keyframes slide-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* ── Stats Row ──────────────────────────────────────────── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.stat-card {
+  background: var(--surface);
+  padding: 14px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-value {
+  font-family: var(--sans);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--text-2);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.stat-sub {
+  font-size: 10px;
+  color: var(--text-2);
+  opacity: 0.6;
+}
+
+/* ── Workspace ──────────────────────────────────────────── */
+.workspace {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Pane ───────────────────────────────────────────────── */
+.pane {
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.pane-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.pane-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.pane-meta {
+  font-size: 11px;
+  color: var(--text-2);
+}
+
+.pane-divider {
+  height: 1px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.scroll-area {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.log-area {
+  gap: 3px;
+  padding: 10px;
+}
+
+::-webkit-scrollbar {
+  width: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border2);
+  border-radius: 2px;
+}
+
+.empty {
+  text-align: center;
+  color: var(--text-2);
+  padding: 40px 20px;
+  font-size: 12px;
+  line-height: 2;
+}
+
+/* ── Tweet Card ─────────────────────────────────────────── */
+.tweet-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  flex-shrink: 0;
+  transition: border-color 0.2s;
+  animation: fade-up 0.3s ease-out;
+}
+
+.tweet-card.viral {
+  border-color: rgba(245, 166, 35, 0.35);
+}
+
+.tweet-card:hover {
+  border-color: var(--border2);
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.tweet-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.tweet-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--border2);
+  color: var(--text-hi);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.tweet-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.tweet-user {
+  display: block;
+  color: var(--blue);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.tweet-time {
+  font-size: 11px;
+  color: var(--text-2);
+}
+
+.tweet-tags {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.tweet-body {
+  color: var(--text-hi);
+  font-size: 13px;
+  line-height: 1.7;
+  margin-bottom: 10px;
+}
+
+.tweet-stats {
+  display: flex;
+  gap: 14px;
+  font-size: 11px;
+  color: var(--text-2);
+}
+
+.tweet-reach {
+  margin-left: auto;
+  color: var(--text);
+}
+
+/* ── Tags ───────────────────────────────────────────────── */
+.tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid;
+}
+
+.tag-media {
+  color: #818cf8;
+  border-color: rgba(129, 140, 248, 0.4);
+  background: rgba(129, 140, 248, 0.08);
+}
+
+.tag-viral {
+  color: var(--amber);
+  border-color: rgba(245, 166, 35, 0.4);
+  background: rgba(245, 166, 35, 0.08);
+}
+
+.tag-replied {
+  color: var(--green);
+  border-color: rgba(62, 207, 142, 0.4);
+  background: rgba(62, 207, 142, 0.08);
+}
+
+.tag-tool {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--purple);
+  border: 1px solid rgba(183, 148, 244, 0.3);
+  background: rgba(183, 148, 244, 0.08);
+}
+
+/* ── Agent Thought ──────────────────────────────────────── */
+.thought {
+  display: flex;
+  gap: 12px;
+  padding: 9px 10px;
+  border-radius: 7px;
+  animation: pop-in 0.2s ease-out;
+  flex-shrink: 0;
+}
+
+.thought:hover {
+  background: var(--surface2);
+}
+
+.thought-sys .thought-msg {
+  color: var(--text-2);
+  font-style: italic;
+  font-size: 11px;
+}
+
+.thought-tool {
+  background: rgba(183, 148, 244, 0.05);
+  border-left: 2px solid rgba(183, 148, 244, 0.3);
+  border-radius: 0 7px 7px 0;
+  padding-left: 12px;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.thought-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  width: 36px;
+}
+
+.thought-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.thought-abbr {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+}
+
+.thought-right {
+  flex: 1;
+  min-width: 0;
+}
+
+.thought-toprow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.thought-agent {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.thought-time {
+  font-size: 10px;
+  color: var(--text-2);
+  margin-left: auto;
+}
+
+.thought-msg {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.typing {
+  display: flex;
+  gap: 5px;
+  padding: 12px;
+  align-items: center;
+}
+
+.typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--amber);
+  animation: bounce 1.2s ease-in-out infinite;
+}
+
+.typing span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes bounce {
+
+  0%,
+  80%,
+  100% {
+    transform: scale(1);
+    opacity: 0.4
+  }
+
+  40% {
+    transform: scale(1.4);
+    opacity: 1
+  }
+}
+
+/* ── Severity Gauge ─────────────────────────────────────── */
+.gauge-wrap {
+  padding: 22px 20px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.gauge-title {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--text-2);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.gauge-value {
+  font-family: var(--sans);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  transition: all 0.5s ease;
+}
+
+.gauge-track {
+  width: 100%;
+  height: 5px;
+  background: var(--border2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.gauge-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.7s ease, background 0.5s ease;
+}
+
+.gauge-ticks {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+/* ── Response Cards ─────────────────────────────────────── */
+.resp-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--green);
+  border-radius: 8px;
+  padding: 12px 14px;
+  flex-shrink: 0;
+  animation: fade-up 0.35s ease-out;
+}
+
+.resp-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.resp-to {
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.resp-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: var(--green);
+  border: 1px solid rgba(62, 207, 142, 0.3);
+  background: rgba(62, 207, 142, 0.08);
+}
+
+.resp-body {
+  color: var(--text-hi);
+  font-size: 13px;
+  line-height: 1.75;
+}
