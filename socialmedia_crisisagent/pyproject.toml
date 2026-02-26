@@ -1,0 +1,33 @@
+[project]
+name = "socialmedia_crisisagent"
+version = "0.1.0"
+description = "socialmedia_crisisAgent using crewAI"
+authors = [{ name = "Your Name", email = "you@example.com" }]
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "apscheduler>=3.11.2",
+    "crewai[google-genai,tools]==1.9.3",
+    "email-validator>=2.3.0",
+    "fastapi>=0.133.1",
+    "fastapi-sso>=0.21.0",
+    "litellm>=1.75.3",
+    "pydantic[email]>=2.11.10",
+    "sse-starlette>=3.2.0",
+    "uvicorn>=0.41.0",
+]
+
+[project.scripts]
+socialmedia_crisisagent = "socialmedia_crisisagent.main:run"
+run_crew = "socialmedia_crisisagent.main:run"
+serve = "socialmedia_crisisagent.main:serve"
+train = "socialmedia_crisisagent.main:train"
+replay = "socialmedia_crisisagent.main:replay"
+test = "socialmedia_crisisagent.main:test"
+run_with_trigger = "socialmedia_crisisagent.main:run_with_trigger"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.crewai]
+type = "crew"

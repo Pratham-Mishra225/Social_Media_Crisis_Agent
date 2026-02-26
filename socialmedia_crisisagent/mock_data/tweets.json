@@ -1,0 +1,38 @@
+{
+    "brand": "NovaBrew Coffee",
+    "wave": 1,
+    "tweets": [
+        {
+            "id": "001",
+            "user": "@sarah_drinks",
+            "text": "just found something disgusting in my NovaBrew coffee. never buying again #NovaBrew",
+            "likes": 240,
+            "retweets": 180,
+            "timestamp": "2024-01-15T10:23:00"
+        },
+        {
+            "id": "002",
+            "user": "@foodwatch_daily",
+            "text": "Multiple complaints coming in about @NovaBrew Coffee quality issues. Is anyone else experiencing this?",
+            "likes": 890,
+            "retweets": 650,
+            "timestamp": "2024-01-15T10:31:00"
+        },
+        {
+            "id": "003",
+            "user": "@mike_xyz",
+            "text": "NovaBrew coffee made me sick this morning. This is unacceptable",
+            "likes": 120,
+            "retweets": 95,
+            "timestamp": "2024-01-15T10:35:00"
+        },
+        {
+            "id": "004",
+            "user": "@healthnews_now",
+            "text": "BREAKING: Social media flooded with complaints about NovaBrew Coffee products #foodsafety",
+            "likes": 2100,
+            "retweets": 1800,
+            "timestamp": "2024-01-15T10:40:00"
+        }
+    ]
+}

@@ -1,0 +1,30 @@
+{
+    "brand": "NovaBrew Coffee",
+    "wave": 2,
+    "tweets": [
+        {
+            "id": "005",
+            "user": "@CNN_Breaking",
+            "text": "DEVELOPING: Health officials now investigating NovaBrew Coffee after dozens report illness. Company responds with generic apology. #NovaBrew #FoodSafety",
+            "likes": 15000,
+            "retweets": 12000,
+            "timestamp": "2024-01-15T11:10:00"
+        },
+        {
+            "id": "006",
+            "user": "@angry_customer_99",
+            "text": "NovaBrew's response is pathetic. 'DM us'?? People are getting sick and you send a copy-paste reply. Boycott #NovaBrew",
+            "likes": 3400,
+            "retweets": 2800,
+            "timestamp": "2024-01-15T11:15:00"
+        },
+        {
+            "id": "007",
+            "user": "@sarah_drinks",
+            "text": "@NovaBrew a DM request is not good enough. This is a public health issue. Where is your official statement?",
+            "likes": 890,
+            "retweets": 750,
+            "timestamp": "2024-01-15T11:20:00"
+        }
+    ]
+}
