@@ -1,3 +1,37 @@
+# Environment variables
 .env
+
+# Python
 __pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.sqlite3
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Node
+node_modules/
+dist/
+build/
+
+# OS files
 .DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Coverage / test
+.coverage
+htmlcov/
+
+# Misc
+*.swp
