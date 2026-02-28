@@ -6,9 +6,12 @@ import sys
 import io
 import threading
 from datetime import datetime
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sse_starlette.sse import EventSourceResponse
+
+from socialmedia_crisisagent.streaming import StreamingSimulator
 
 # Resolve paths relative to the project root (four levels up from this file)
 # server.py → api/ → socialmedia_crisisagent/ → src/ → socialmedia_crisisagent/
@@ -29,6 +32,13 @@ app.add_middleware(
 _lock = threading.Lock()
 agent_event_log: list[dict] = []
 crew_status: dict = {"status": "idle", "final_output": None}
+
+# ── Streaming simulator (singleton) ────────────────────────────────────────
+simulator = StreamingSimulator(
+    data_dir=os.path.join(_PROJECT_ROOT, "mock_data"),
+    delay_seconds=3.0,
+    initial_wave=1,
+)
 
 
 def log_event(agent: str, message: str, event_type: str = "thought"):
@@ -189,10 +199,41 @@ def get_tweets(wave: int = 1):
 
 
 @app.post("/inject-crisis/{wave}")
-def inject_crisis(wave: int = 1):
+async def inject_crisis(wave: int = 1):
     filename = "tweets.json" if wave == 1 else f"tweets_wave{wave}.json"
     path = os.path.join(_PROJECT_ROOT, "mock_data", filename)
     if not os.path.exists(path):
         return JSONResponse(status_code=404, content={"error": f"Wave {wave} not found"})
-    log_event("System", f"💥 Crisis wave {wave} injected", "system")
-    return {"status": "injected", "wave": wave, "file": filename}
+    count = await simulator.inject_wave(wave)
+    log_event("System", f"💥 Crisis wave {wave} injected ({count} posts)", "system")
+    return {"status": "injected", "wave": wave, "file": filename, "posts_queued": count}
+
+
+@app.get("/stream")
+async def stream_posts(request: Request):
+    """SSE endpoint — emits one tweet at a time from the streaming simulator."""
+
+    async def _event_generator():
+        # Reset the simulator for a fresh stream each time a client connects
+        if simulator.running:
+            await simulator.stop()
+
+        # Small delay to let the old generator fully terminate
+        await asyncio.sleep(0.1)
+
+        # Re-create internal state for a new run
+        simulator._running_flag = False
+        simulator._queue = asyncio.Queue()
+        simulator._new_data = asyncio.Event()
+        simulator._initial_wave = 1
+
+        async for post in simulator.stream():
+            if await request.is_disconnected():
+                await simulator.stop()
+                break
+            yield {
+                "event": "tweet",
+                "data": json.dumps(post),
+            }
+
+    return EventSourceResponse(_event_generator())

@@ -61,25 +61,37 @@ def _build_providers() -> list:
         except Exception as e:
             print(f"⚠️  Gemini key invalid or quota exhausted — skipping ({str(e)[:80]})")
 
-    # ── Groq: Validate upfront (CrewAI uses native SDK for known providers) ──
+    # ── Groq: Register multiple models (each has its own daily quota) ──
+    # We validate the key once with a tiny call, then register all models.
+    # If llama-3.3-70b hits its TPD cap, we fall back to 8b, then gemma2.
     key = os.getenv("GROQ_API_KEY")
     if key and key != "your_groq_api_key_here":
+        groq_models = [
+            ("Groq Llama-3.3-70b",  "groq/llama-3.3-70b-versatile"),
+            ("Groq Llama-3.1-8b",   "groq/llama-3.1-8b-instant"),
+            ("Groq Mixtral-8x7b",   "groq/mixtral-8x7b-32768"),
+        ]
+        # Validate key once with cheapest model
         try:
             import litellm as _lt
             _lt.completion(
-                model="groq/llama-3.3-70b-versatile",
-                messages=[{"role": "user", "content": "ping"}],
+                model="groq/llama-3.1-8b-instant",
+                messages=[{"role": "user", "content": "hi"}],
                 api_key=key,
-                max_tokens=5,
+                max_tokens=2,
             )
-            providers.append({
-                "name": "Groq Llama-3.3-70b",
-                "model": "groq/llama-3.3-70b-versatile",
-                "api_key": key,
-            })
-            print("✅ Groq key validated")
+            for name, model in groq_models:
+                providers.append({"name": name, "model": model, "api_key": key})
+            print(f"✅ Groq key validated — {len(groq_models)} models registered")
         except Exception as e:
-            print(f"⚠️  Groq key invalid — skipping ({str(e)[:80]})")
+            err = str(e).lower()
+            if "rate_limit" in err or "429" in str(e):
+                # Key is valid, just quota-limited — still register all models
+                for name, model in groq_models:
+                    providers.append({"name": name, "model": model, "api_key": key})
+                print(f"✅ Groq key valid (quota-limited) — {len(groq_models)} models registered")
+            else:
+                print(f"⚠️  Groq key invalid — skipping ({str(e)[:80]})")
 
     return providers
 
@@ -112,6 +124,10 @@ def _fallback_completion(*args, **kwargs):
     """
     global _current_idx
 
+    _MAX_RETRIES = 3          # retries per provider on minute-level limits
+    _RATE_LIMIT_WAIT = 60     # seconds to wait on TPM rate-limit
+    _PACING_DELAY = 5         # seconds between successful calls
+
     for i in range(_current_idx, len(_providers)):
         provider = _providers[i]
         # Skip OpenAI — it uses CrewAI's native SDK, not litellm
@@ -121,12 +137,13 @@ def _fallback_completion(*args, **kwargs):
         kwargs["model"] = provider["model"]
         kwargs["api_key"] = provider["api_key"]
 
-        # Retry once on same provider before switching
-        for retry in range(2):
+        for retry in range(_MAX_RETRIES):
             try:
                 result = _original_completion(*args, **kwargs)
                 if i != _current_idx:
                     _current_idx = i
+                # Proactive pacing: spread calls so we don't burst the TPM
+                time.sleep(_PACING_DELAY)
                 return result
             except Exception as e:
                 err = str(e).lower()
@@ -136,10 +153,24 @@ def _fallback_completion(*args, **kwargs):
                     or "resource_exhausted" in err
                     or "quota" in err
                 )
+                # Daily quota (TPD) = skip this model immediately, no retry
+                is_daily_limit = "tokens per day" in err or "tpd" in err
 
-                if is_rate_limit and retry == 0:
-                    print(f"⏳ {provider['name']}: Rate limited → waiting 15s...")
-                    time.sleep(15)
+                if is_daily_limit:
+                    next_msg = ""
+                    if i + 1 < len(_providers):
+                        next_p = _providers[i + 1]
+                        if not next_p["model"].startswith("openai/"):
+                            next_msg = f" → switching to {next_p['name']}"
+                    print(f"⚠️  {provider['name']}: Daily quota exhausted{next_msg}")
+                    break  # Skip all retries, move to next provider
+
+                if is_rate_limit and retry < _MAX_RETRIES - 1:
+                    print(
+                        f"⏳ {provider['name']}: Rate limited → waiting "
+                        f"{_RATE_LIMIT_WAIT}s (attempt {retry + 1}/{_MAX_RETRIES})..."
+                    )
+                    time.sleep(_RATE_LIMIT_WAIT)
                     continue
 
                 if is_rate_limit:
@@ -155,26 +186,30 @@ def _fallback_completion(*args, **kwargs):
     # All providers exhausted
     raise Exception(
         f"❌ All LLM providers exhausted. "
-        "Please wait for rate limits to reset or upgrade your API tier."
+        "Please wait for daily rate limits to reset or upgrade your API tier."
     )
 
 
 litellm.completion = _fallback_completion
 
 
-# ─── Get primary LLM instance ─────────────────────────────────────
-def get_llm() -> LLM:
-    """Returns an LLM instance using the first available provider."""
+# ─── Get LLM instance with token budget ────────────────────────────
+def get_llm(max_tokens: int = 200) -> LLM:
+    """Returns an LLM instance with a strict token cap."""
     provider = _providers[_current_idx]
     return LLM(
         model=provider["model"],
         api_key=provider["api_key"],
-        max_tokens=500,
+        max_tokens=max_tokens,
     )
 
 
-# Single instance reused across all agents
-llm = get_llm()
+# Per-agent LLMs — budget tuned for 12,000 TPM across full crew run
+llm_monitor  = get_llm(max_tokens=200)   # structured table output
+llm_severity = get_llm(max_tokens=100)   # classification + 2-3 sentences
+llm_strategy = get_llm(max_tokens=120)   # short directive, 3 fields
+llm_drafter  = get_llm(max_tokens=350)   # 4 tweet-length replies
+llm_feedback = get_llm(max_tokens=120)   # verdict + one sentence
 
 
 @CrewBase
@@ -189,16 +224,16 @@ class SocialmediaCrisisagent():
         return Agent(
             config=self.agents_config['monitor_agent'],
             tools=[FeedReaderTool()],
-            llm=llm,
+            llm=llm_monitor,
             verbose=True,
-            max_iter=3,
+            max_iter=2,
         )
 
     @agent
     def severity_agent(self) -> Agent:
         return Agent(
             config=self.agents_config['severity_agent'],
-            llm=llm,
+            llm=llm_severity,
             verbose=True,
             max_iter=2,
         )
@@ -207,7 +242,7 @@ class SocialmediaCrisisagent():
     def strategy_agent(self) -> Agent:
         return Agent(
             config=self.agents_config['strategy_agent'],
-            llm=llm,
+            llm=llm_strategy,
             verbose=True,
             max_iter=2,
         )
@@ -217,9 +252,9 @@ class SocialmediaCrisisagent():
         return Agent(
             config=self.agents_config['drafter_agent'],
             tools=[ResponseLoggerTool()],
-            llm=llm,
+            llm=llm_drafter,
             verbose=True,
-            max_iter=6,
+            max_iter=3,
         )
 
     @agent
@@ -227,9 +262,9 @@ class SocialmediaCrisisagent():
         return Agent(
             config=self.agents_config['feedback_agent'],
             tools=[FeedReaderTool()],
-            llm=llm,
+            llm=llm_feedback,
             verbose=True,
-            max_iter=3,
+            max_iter=2,
         )
 
     @task
@@ -262,4 +297,5 @@ class SocialmediaCrisisagent():
             tasks=self.tasks,
             process=Process.sequential,
             verbose=True,
+            max_rpm=15,  # stay well under 30 RPM limit
         )

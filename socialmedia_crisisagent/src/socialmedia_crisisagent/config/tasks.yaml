@@ -1,99 +1,60 @@
 monitor_task:
   description: >
-    Use the Tweet Feed Reader tool to read all incoming mentions 
-    for NovaBrew Coffee. Identify tweets with negative sentiment, 
-    high engagement (likes + retweets > 100), or media involvement. 
-    
-    For each flagged tweet output a structured entry with:
-    - tweet_id
-    - user
-    - text
-    - total_engagement (likes + retweets)
-    - flags (list of: negative_sentiment, high_engagement, media_involvement)
-    
-    Process EVERY tweet individually. Do not group or summarize.
+    Use the Tweet Feed Reader tool with query "wave=1".
+    For each tweet output ONE line in this format:
+    ID | @user | engagement_count | flags
+
+    Flags: neg, high_eng (>100), media.
+    Do NOT include tweet text. Do NOT write prose. Just the table rows.
   expected_output: >
-    A numbered list of flagged tweets, each with tweet_id, user, text, 
-    total_engagement score, and specific flags applied.
+    A compact table with one row per tweet (max 4 rows).
+    No explanations or commentary.
   agent: monitor_agent
 
 severity_task:
   description: >
-    Based on the flagged tweets from the Monitor Agent, assess the 
-    overall crisis severity. Consider: total reach (sum of retweets), 
-    whether media accounts are involved, and the nature of the complaint 
-    (quality issue vs general dissatisfaction). 
-    Classify as LOW, MODERATE, or CRITICAL with clear reasoning.
+    Classify the crisis as LOW, MODERATE, or CRITICAL.
+    Output the classification word first, then exactly 2 sentences of reasoning.
+    Do NOT repeat the tweet data. Do NOT write more than 3 lines total.
   expected_output: >
-    A severity classification (LOW, MODERATE, or CRITICAL) with 
-    a 3-5 sentence justification explaining the reasoning.
+    One word (LOW/MODERATE/CRITICAL) followed by 2 short sentences.
   agent: severity_agent
 
 strategy_task:
   description: >
-    Given the severity classification, decide the response strategy:
-    - LOW: Monitor only, no response needed
-    - MODERATE: Respond publicly with empathy, offer resolution
-    - CRITICAL: Draft response AND flag for immediate human escalation
-    Specify the tone (apologetic, investigative, reassuring) and 
-    the platform approach.
+    Based on severity, output ONLY these 3 fields:
+    ACTION: [monitor_only | respond_publicly | respond_and_escalate]
+    TONE: [apologetic | investigative | reassuring]
+    ESCALATE: [YES | NO]
+
+    Nothing else. No examples. No explanations.
   expected_output: >
-    A clear strategy directive: action to take, tone to use, 
-    and whether human escalation is required (YES or NO).
+    Exactly 3 lines: ACTION, TONE, ESCALATE.
   agent: strategy_agent
 
 drafter_task:
   description: >
-    Based on the strategy directive, write individual public-facing responses 
-    for EACH flagged tweet for NovaBrew Coffee.
-    
-    For each tweet write a unique response that:
-    - Starts with the @username of that tweet's author
-    - Acknowledges that specific complaint (not a generic reply)
-    - Is under 280 characters
-    - Offers a next step (DM us or email support@novabrew.com)
-    - Matches the apologetic and reassuring tone
+    Write a short reply for EACH flagged tweet. Format exactly:
+    TWEET 001 (@sarah_drinks): <reply under 200 chars>
+    TWEET 002 (@foodwatch_daily): <reply under 200 chars>
+    TWEET 003 (@mike_xyz): <reply under 200 chars>
+    TWEET 004 (@healthnews_now): <reply under 200 chars>
 
-    Format your output exactly like this:
-    
-    TWEET 001 (@sarah_drinks):
-    <your response here>
-    
-    TWEET 002 (@foodwatch_daily):
-    <your response here>
-    
-    TWEET 003 (@mike_xyz):
-    <your response here>
-    
-    TWEET 004 (@healthnews_now):
-    <your response here>
+    Each reply: mention @user, acknowledge complaint briefly, offer DM/email.
+    Keep each under 200 characters. No extra text before or after.
   expected_output: >
-    Four individually crafted tweet responses, one per flagged tweet,
-    each under 280 characters, formatted with the tweet ID and username.
+    Exactly 4 lines, one per tweet, each under 200 characters.
   agent: drafter_agent
   output_file: mock_data/crisis_log.md
 
 feedback_task:
   description: >
-    You are monitoring the aftermath of NovaBrew Coffee's response.
-    
-    Step 1: You MUST start by calling the Tweet Feed Reader tool with 
-    the exact query string: wave=2
-    Do NOT skip this tool call. Do NOT make up tweets.
-    Only analyze tweets returned by the tool.
-    
-    Step 2: Compare the new wave against the original crisis:
-    - Are complaints increasing or decreasing?
-    - Is media coverage escalating?
-    - Is the drafted response being mocked or ignored?
-    
-    Step 3: Make a final recommendation:
-    - RESOLVED: Sentiment improving, monitor passively
-    - FOLLOW UP: Still negative but manageable, second response in 30 min
-    - ESCALATE: Situation is worsening, alert human team immediately
-    
-    Provide clear reasoning referencing specific tweets from wave 2.
+    Step 1: Call Tweet Feed Reader tool with query "wave=2".
+    Step 2: Output ONLY:
+    STATUS: [RESOLVED | FOLLOW UP | ESCALATE]
+    REASON: <one sentence referencing wave 2 data>
+
+    Do NOT repeat or summarize the tweets. Just the verdict.
   expected_output: >
-    Final status (RESOLVED / FOLLOW UP / ESCALATE) with reasoning 
-    based on wave 2 tweet data, and specific next steps for the PR team.
+    Exactly 2 lines: STATUS and REASON.
   agent: feedback_agent

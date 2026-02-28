@@ -189,14 +189,50 @@ export default function App() {
   const [stats, setStats] = useState({ tweets: 0, reach: 0, responses: 0 });
   const pollingRef = useRef(null);
   const logRef = useRef(null);
+  const sseRef = useRef(null);
 
-  useEffect(() => { loadTweets(1); }, []);
+  // Connect to SSE stream on mount
+  useEffect(() => {
+    connectStream();
+    return () => { if (sseRef.current) sseRef.current.close(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function connectStream() {
+    // Close any previous connection
+    if (sseRef.current) sseRef.current.close();
+
+    setTweets([]);
+    setWave(1);
+    setStats(prev => ({ ...prev, tweets: 0, reach: 0 }));
+
+    const es = new EventSource(`${API}/stream`);
+    sseRef.current = es;
+
+    es.addEventListener("tweet", (e) => {
+      try {
+        const post = JSON.parse(e.data);
+        setTweets(prev => [...prev, post]);
+        setWave(post.wave || 1);
+        setStats(prev => ({
+          ...prev,
+          tweets: prev.tweets + 1,
+          reach: prev.reach + (post.likes || 0) + (post.retweets || 0),
+        }));
+      } catch (err) { console.error("SSE parse error", err); }
+    });
+
+    es.onerror = () => {
+      console.warn("SSE connection lost – will auto-reconnect");
+    };
+  }
 
   useEffect(() => {
     if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
   }, [events]);
 
   async function loadTweets(w) {
+    // Kept for backward-compat / manual override; SSE is the primary feed
     try {
       const res = await axios.get(`${API}/tweets/${w}`);
       const data = res.data.tweets || [];
@@ -254,7 +290,9 @@ export default function App() {
           setResponses(parsed);
           setStats(prev => ({ ...prev, responses: parsed.length }));
           setRecommendation(parseRecommendation(evts));
-          await loadTweets(2);
+          // Inject wave 2 into the live stream instead of bulk-loading
+          try { await axios.post(`${API}/inject-crisis/2`); }
+          catch (err) { console.warn("Wave 2 inject failed", err); }
         }
       }
     } catch (e) { console.error(e); }
@@ -268,11 +306,12 @@ export default function App() {
     catch (e) { setStatus("error"); clearInterval(pollingRef.current); }
   }
 
-  function handleInject() {
+  async function handleInject() {
     clearInterval(pollingRef.current);
     setStatus("idle"); setEvents([]); setResponses([]);
     setRecommendation(null); setSeverity("IDLE");
-    loadTweets(1);
+    // Restart the SSE stream (reloads wave 1 automatically)
+    connectStream();
   }
 
   const REC_CFG = {
