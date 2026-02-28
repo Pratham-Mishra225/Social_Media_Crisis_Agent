@@ -2,6 +2,11 @@ import json
 import os
 from crewai.tools import BaseTool
 
+# Resolve paths relative to the project root (three levels up from this file)
+_PROJECT_ROOT = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
+
 
 class FeedReaderTool(BaseTool):
     name: str = "Tweet Feed Reader"
@@ -18,12 +23,12 @@ class FeedReaderTool(BaseTool):
             wave = "2"
 
         filename = f"tweets_wave{wave}.json" if wave == "2" else "tweets.json"
-        path = os.path.join(os.getcwd(), "mock_data", filename)
+        path = os.path.join(_PROJECT_ROOT, "mock_data", filename)
 
         if not os.path.exists(path):
             return f"ERROR: {filename} not found at {path}"
 
-        with open(path, "r") as f:
+        with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
         return json.dumps(data, indent=2)

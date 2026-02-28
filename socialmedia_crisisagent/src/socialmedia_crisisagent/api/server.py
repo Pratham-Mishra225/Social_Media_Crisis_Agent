@@ -4,34 +4,43 @@ import asyncio
 import re
 import sys
 import io
+import threading
 from datetime import datetime
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+# Resolve paths relative to the project root (four levels up from this file)
+# server.py → api/ → socialmedia_crisisagent/ → src/ → socialmedia_crisisagent/
+_PROJECT_ROOT = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
+
 app = FastAPI(title="Crisis Agent API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+_lock = threading.Lock()
 agent_event_log: list[dict] = []
 crew_status: dict = {"status": "idle", "final_output": None}
 
 
 def log_event(agent: str, message: str, event_type: str = "thought"):
-    event = {
-        "id": len(agent_event_log) + 1,
-        "timestamp": datetime.now().isoformat(),
-        "agent": agent,
-        "message": message,
-        "type": event_type,
-    }
-    agent_event_log.append(event)
+    with _lock:
+        event = {
+            "id": len(agent_event_log) + 1,
+            "timestamp": datetime.now().isoformat(),
+            "agent": agent,
+            "message": message,
+            "type": event_type,
+        }
+        agent_event_log.append(event)
     return event
 
 
@@ -126,55 +135,64 @@ def get_events():
 @app.post("/run")
 async def run_crew():
     global agent_event_log, crew_status
-    agent_event_log = []
+
+    if crew_status.get("status") == "running":
+        return JSONResponse(status_code=409, content={"status": "error", "message": "Crew is already running"})
+
+    with _lock:
+        agent_event_log = []
     crew_status = {"status": "running", "final_output": None}
     log_event("System", "🚨 Crisis crew triggered", "system")
 
-    # Capture stdout to extract agent thoughts
-    original_stdout = sys.stdout
-    capture = CrewOutputCapture(original_stdout)
-    sys.stdout = capture
+    def _run_crew_sync():
+        """Run the crew in a thread so the event loop stays free for polling."""
+        global crew_status
+        original_stdout = sys.stdout
+        capture = CrewOutputCapture(original_stdout)
+        sys.stdout = capture
+        try:
+            from socialmedia_crisisagent.crew import SocialmediaCrisisagent
+            result = SocialmediaCrisisagent().crew().kickoff()
+            final_output = str(result)
+            crew_status = {"status": "completed", "final_output": final_output}
+            log_event("System", "✅ Crew completed successfully", "system")
+        except Exception as e:
+            crew_status = {"status": "error", "final_output": str(e)}
+            log_event("System", f"❌ Error: {str(e)[:100]}", "error")
+        finally:
+            sys.stdout = original_stdout
 
-    try:
-        from socialmedia_crisisagent.crew import SocialmediaCrisisagent
-        result = SocialmediaCrisisagent().crew().kickoff()
-        final_output = str(result)
-        crew_status = {"status": "completed", "final_output": final_output}
-        log_event("System", "✅ Crew completed successfully", "system")
-        return {"status": "completed", "final_output": final_output, "events": agent_event_log}
+    # Run in a thread so /events and /status remain responsive
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, _run_crew_sync)
 
-    except Exception as e:
-        crew_status = {"status": "error", "final_output": str(e)}
-        log_event("System", f"❌ Error: {str(e)[:100]}", "error")
-        return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
-
-    finally:
-        sys.stdout = original_stdout
+    return {"status": crew_status["status"], "final_output": crew_status.get("final_output"), "events": agent_event_log}
 
 
 @app.get("/logs")
 def get_logs():
-    path = os.path.join(os.getcwd(), "mock_data", "crisis_log.md")
+    path = os.path.join(_PROJECT_ROOT, "mock_data", "crisis_log.md")
     if not os.path.exists(path):
         return {"logs": "No responses drafted yet."}
-    with open(path, "r") as f:
+    with open(path, "r", encoding="utf-8") as f:
         return {"logs": f.read()}
 
 
 @app.get("/tweets/{wave}")
 def get_tweets(wave: int = 1):
     filename = "tweets.json" if wave == 1 else f"tweets_wave{wave}.json"
-    path = os.path.join(os.getcwd(), "mock_data", filename)
+    path = os.path.join(_PROJECT_ROOT, "mock_data", filename)
     if not os.path.exists(path):
         return JSONResponse(status_code=404, content={"error": f"{filename} not found"})
-    with open(path, "r") as f:
+    with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
 @app.post("/inject-crisis/{wave}")
 def inject_crisis(wave: int = 1):
     filename = "tweets.json" if wave == 1 else f"tweets_wave{wave}.json"
-    path = os.path.join(os.getcwd(), "mock_data", filename)
+    path = os.path.join(_PROJECT_ROOT, "mock_data", filename)
     if not os.path.exists(path):
         return JSONResponse(status_code=404, content={"error": f"Wave {wave} not found"})
-    return {"status": "injected", "wave": wave}
+    log_event("System", f"💥 Crisis wave {wave} injected", "system")
+    return {"status": "injected", "wave": wave, "file": filename}

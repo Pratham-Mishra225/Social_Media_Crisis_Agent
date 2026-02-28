@@ -23,7 +23,6 @@ serve = "socialmedia_crisisagent.main:serve"
 train = "socialmedia_crisisagent.main:train"
 replay = "socialmedia_crisisagent.main:replay"
 test = "socialmedia_crisisagent.main:test"
-run_with_trigger = "socialmedia_crisisagent.main:run_with_trigger"
 
 [build-system]
 requires = ["hatchling"]

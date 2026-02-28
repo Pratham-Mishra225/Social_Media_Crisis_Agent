@@ -1,4 +1,4 @@
-TWEET 001 (@sarah_drinks): @sarah_drinks Sorry to hear you had a bad experience with our coffee. We're taking immediate action to investigate. Please DM us so we can make it right.
-TWEET 002 (@foodwatch_daily): @foodwatch_daily Concerning to hear about quality issues with our coffee. We're committed to food safety & quality. Email support@novabrew.com for more info.
-TWEET 003 (@mike_xyz): @mike_xyz Sorry to hear our coffee made you sick. We take this seriously & want to help. Please DM us to discuss further.
-TWEET 004 (@healthnews_now): @healthnews_now We apologize for the distress caused by recent issues with our coffee. We're investigating & taking action. Email support@novabrew.com for updates.
+TWEET 001 (@sarah_drinks): @sarah_drinks Sorry to hear you found something disgusting in your NovaBrew coffee. That's not the experience we want for you. Can you please DM us so we can look into this further?
+TWEET 002 (@foodwatch_daily): @foodwatch_daily Concerning to hear about the complaints coming in about our coffee quality. We're taking immediate action to investigate. Please email support@novabrew.com so we can learn more.
+TWEET 003 (@mike_xyz): @mike_xyz Sorry to hear our coffee made you sick. We're truly sorry and want to help. Can you DM us with more details so we can investigate and make it right?
+TWEET 004 (@healthnews_now): @healthnews_now We're deeply sorry to hear about the complaints about our coffee products. We're investigating immediately and will provide updates. Please DM us or email support@novabrew.com for more information.

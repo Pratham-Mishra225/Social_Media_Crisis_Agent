@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 import sys
 import warnings
-import json
-from datetime import datetime
 
 from socialmedia_crisisagent.crew import SocialmediaCrisisagent
 
@@ -18,7 +16,7 @@ def run():
         print(result)
         return result
     except Exception as e:
-        raise Exception(f"An error occurred while running the crew: {e}")
+        raise RuntimeError(f"An error occurred while running the crew: {e}") from e
 
 
 def serve():
@@ -34,27 +32,36 @@ def serve():
 
 
 def train():
+    if len(sys.argv) < 3:
+        print("Usage: train <n_iterations> <output_filename>")
+        sys.exit(1)
     try:
         SocialmediaCrisisagent().crew().train(
             n_iterations=int(sys.argv[1]),
             filename=sys.argv[2],
         )
     except Exception as e:
-        raise Exception(f"An error occurred while training the crew: {e}")
+        raise RuntimeError(f"An error occurred while training the crew: {e}") from e
 
 
 def replay():
+    if len(sys.argv) < 2:
+        print("Usage: replay <task_id>")
+        sys.exit(1)
     try:
         SocialmediaCrisisagent().crew().replay(task_id=sys.argv[1])
     except Exception as e:
-        raise Exception(f"An error occurred while replaying the crew: {e}")
+        raise RuntimeError(f"An error occurred while replaying the crew: {e}") from e
 
 
 def test():
+    if len(sys.argv) < 3:
+        print("Usage: test <n_iterations> <eval_llm>")
+        sys.exit(1)
     try:
         SocialmediaCrisisagent().crew().test(
             n_iterations=int(sys.argv[1]),
             eval_llm=sys.argv[2],
         )
     except Exception as e:
-        raise Exception(f"An error occurred while testing the crew: {e}")
+        raise RuntimeError(f"An error occurred while testing the crew: {e}") from e
