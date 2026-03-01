@@ -49,12 +49,14 @@ drafter_task:
 
 feedback_task:
   description: >
-    Step 1: Call Tweet Feed Reader tool with query "wave=2".
-    Step 2: Output ONLY:
+    Step 1: Call the Tweet Feed Reader tool with query "wave=2" to get wave 2 tweets.
+    Step 2: After reading the tool result, respond with PLAIN TEXT (do NOT call any tool).
+    Your plain-text answer must be ONLY these two lines:
     STATUS: [RESOLVED | FOLLOW UP | ESCALATE]
     REASON: <one sentence referencing wave 2 data>
 
-    Do NOT repeat or summarize the tweets. Just the verdict.
+    IMPORTANT: The ONLY tool you may call is "tweet_feed_reader". Do NOT invent
+    or call any other tool. After the tool returns data, write your answer as text.
   expected_output: >
-    Exactly 2 lines: STATUS and REASON.
+    Exactly 2 lines of plain text: STATUS and REASON. No tool calls.
   agent: feedback_agent

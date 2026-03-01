@@ -127,6 +127,7 @@ def _fallback_completion(*args, **kwargs):
     _MAX_RETRIES = 3          # retries per provider on minute-level limits
     _RATE_LIMIT_WAIT = 60     # seconds to wait on TPM rate-limit
     _PACING_DELAY = 5         # seconds between successful calls
+    _TOOL_HALLUC_RETRIES = 2  # retries for tool hallucination errors
 
     for i in range(_current_idx, len(_providers)):
         provider = _providers[i]
@@ -164,6 +165,20 @@ def _fallback_completion(*args, **kwargs):
                             next_msg = f" → switching to {next_p['name']}"
                     print(f"⚠️  {provider['name']}: Daily quota exhausted{next_msg}")
                     break  # Skip all retries, move to next provider
+
+                # Tool hallucination: model called a non-existent tool
+                is_tool_halluc = (
+                    "tool call validation failed" in err
+                    or "tool_use_failed" in err
+                    or "not in request.tools" in err
+                )
+                if is_tool_halluc and retry < _TOOL_HALLUC_RETRIES:
+                    print(
+                        f"🔄 {provider['name']}: Hallucinated tool call → retrying "
+                        f"(attempt {retry + 1}/{_TOOL_HALLUC_RETRIES})..."
+                    )
+                    time.sleep(2)
+                    continue
 
                 if is_rate_limit and retry < _MAX_RETRIES - 1:
                     print(
@@ -264,7 +279,7 @@ class SocialmediaCrisisagent():
             tools=[FeedReaderTool()],
             llm=llm_feedback,
             verbose=True,
-            max_iter=2,
+            max_iter=4,
         )
 
     @task

@@ -1,2 +1,2 @@
-STATUS: FOLLOW UP
-REASON: The crisis severity has increased from wave 1 to wave 2 due to the rise in engagement and mentions across two critical high-engagement tweets ( CNN_Breaking and angry_customer_99 ) and a public health issue being raised.
+STATUS: ESCALATE
+REASON: The crisis has intensified with investigations by health officials and widespread negative sentiment, including a call for a boycott and demands for a more comprehensive response.
