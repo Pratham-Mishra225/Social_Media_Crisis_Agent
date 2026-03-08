@@ -1,2 +1,2 @@
 STATUS: ESCALATE
-REASON: The crisis has intensified with investigations by health officials and widespread negative sentiment, including a call for a boycott and demands for a more comprehensive response.
+REASON: The wave 2 data shows a significant escalation of the crisis, with investigative reports from major news outlets like @CNN_Breaking and continued negative sentiment from customers, indicating a need for immediate further action.

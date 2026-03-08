@@ -1,4 +1,4 @@
-TWEET 001 (@sarah_drinks): Sorry to hear that, @sarah_drinks. Can you please DM us?
-TWEET 002 (@foodwatch_daily): Sorry @foodwatch_daily. Please email us at support@email.com
-TWEET 003 (@mike_xyz): Hi @mike_xyz, sorry for the issue. Can you DM us for help?
-TWEET 004 (@healthnews_now): Sorry @healthnews_now. Please DM or email us for assistance
+TWEET 001 (@sarah_drinks): Sorry @sarah_drinks, let's resolve this. DM us or email support@example.com
+TWEET 002 (@foodwatch_daily): Sorry to hear @foodwatch_daily, DM or email support@example.com for help
+TWEET 003 (@mike_xyz): Sorry @mike_xyz, we're here to help. DM or email support@example.com
+TWEET 004 (@healthnews_now): Apologize @healthnews_now, let's talk. DM or email support@example.com
