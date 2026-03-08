@@ -783,7 +783,6 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ## 📞 Contact & Support
 
-- **Documentation**: See [HACKATHON_SUBMISSION.md](HACKATHON_SUBMISSION.md) for detailed technical documentation
 - **Issues**: [GitHub Issues](https://github.com/yourusername/crisis_agent/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/yourusername/crisis_agent/discussions)
 
@@ -811,6 +810,5 @@ If you find this project useful, please consider giving it a star ⭐ on GitHub!
 
 ---
 
-**Built with ❤️ using CrewAI, FastAPI, and React**
 
 *Protecting brands, one crisis at a time.*
